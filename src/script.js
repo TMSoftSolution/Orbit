@@ -1,10 +1,34 @@
-"use strict";
-
 function randRange(min, max) {
     return Math.random() * (max - min) + min;
 }
 function mapRange(value, low1, high1, low2, high2) {
     return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+function distance(dot1, dot2) {
+    let [x1, y1, x2, y2] = [dot1[0], dot1[1], dot2[0], dot2[1]];
+    return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+}
+// not used, but fun to write after figuring out the 2D version
+// function distance3D(dot1, dot2) {
+//   let [x1, y1, z1, x2, y2, z2] = [dot1[0], dot1[1], dot1[2], dot2[0], dot2[1], dot2[2]];
+//   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2) + Math.pow(z1 - z2, 2));
+// }
+function limitToCircle(x, y, a, b, r) {
+    let dist = distance([x, y], [a, b]);
+    if (dist <= r) {
+        return [x, y];
+    }
+    else {
+        x = x - a;
+        y = y - b;
+        let radians = Math.atan2(y, x);
+        return [Math.cos(radians) * r + a, Math.sin(radians) * r + b];
+    }
+}
+function isInEllipse(mouseX, mouseY, ellipseX, ellipseY, ellipseW, ellipseH) {
+    let dx = mouseX - ellipseX;
+    var dy = mouseY - ellipseY;
+    return ((dx * dx) / (ellipseW * ellipseW) + (dy * dy) / (ellipseH * ellipseH) <= 1);
 }
 const IS_HIGH_RES = window.matchMedia(`
     (-webkit-min-device-pixel-ratio: 2),
@@ -20,8 +44,8 @@ const IS_HIGH_RES_AND_MOBILE = (IS_HIGH_RES.matches && IS_MOBILE);
 class Star {
     constructor(container) {
         let [size, depth] = container;
-        this.FORWARD_SPEED = randRange(100, 200);
-        this.SIDEWAYS_SPEED = randRange(50, 100);
+        this.FORWARD_SPEED = randRange(50, 150);
+        this.SIDEWAYS_SPEED = 100;
         if (IS_HIGH_RES_AND_MOBILE) {
             this.FORWARD_SPEED *= 2;
             this.SIDEWAYS_SPEED *= 2;
@@ -122,14 +146,15 @@ class Star {
             this.resetZ();
         }
     }
-    draw(context, container, screen) {
+    draw(context, container, screen, mouseX, mouseY) {
         let [width, height] = screen;
         let [size, depth] = container;
         let sx = mapRange(this.x / this.z, 0, 1, 0, width);
         let sy = mapRange(this.y / this.z, 0, 1, 0, height);
-        const maxRadius = (IS_HIGH_RES.matches && IS_MOBILE) ? 20 : 5;
+        let px = mapRange(this.px / this.pz, 0, 1, 0, width);
+        let py = mapRange(this.py / this.pz, 0, 1, 0, height);
+        const maxRadius = (IS_HIGH_RES.matches && IS_MOBILE) ? 8 : 4;
         let radius = Math.min(Math.abs(mapRange(this.z, 0, depth, maxRadius, 0.01)), maxRadius);
-
         // star point
         context.beginPath();
         context.arc(sx, sy, radius, 0, 2 * Math.PI);
@@ -138,6 +163,26 @@ class Star {
         this.px = this.x;
         this.py = this.y;
         this.pz = this.z;
+        // star trail
+        context.beginPath();
+        context.moveTo(px, py);
+        context.lineTo(sx, sy);
+        context.lineWidth = radius;
+        context.strokeStyle = this.color;
+        context.stroke();
+        /*
+        * Easter Egg #2 ^.^
+        * uncomment the snippet below to add little tracer lines that follow the mouse/touch
+        */
+        // if (Math.min(width, height)/2 > distance([mouseX, mouseY], [sx, sy]) && this.z < depth/2) {
+        //   context.beginPath();
+        //   context.moveTo(sx, sy);
+        //   let [mX, mY] = limitToCircle(mouseX, mouseY, sx, sy, 50);
+        //   context.lineTo(mX, mY);
+        //   context.lineWidth = radius;
+        //   context.strokeStyle = this.color.replace(')', `, ${mapRange(this.z, 0, depth, 0.1, 0.6)})`);
+        //   context.stroke();
+        // }
     }
 }
 const getPointerInput = (callback, element = document, delay = 600) => {
@@ -154,6 +199,51 @@ const getPointerInput = (callback, element = document, delay = 600) => {
     };
     let timer = false; // used to track when pointer motion stops
     let animFrame = false; // debounces pointer motion so we don't do extra work needlessly
+    // this fn is called on touch and mouse events
+    const handlePointer = (event) => {
+        // if there's an animation frame already for this handler, cancel it
+        if (animFrame) {
+            animFrame = window.cancelAnimationFrame(animFrame);
+        }
+        // and instead it'll run the latest animation frame
+        animFrame = window.requestAnimationFrame(() => {
+            let x, y;
+            // handle mobile first, otherwise desktop/laptop
+            if (event.touches) {
+                [x, y] = [event.touches[0].clientX, event.touches[0].clientY];
+            }
+            else {
+                [x, y] = [event.clientX, event.clientY];
+            }
+            pointer.x = x;
+            pointer.y = y;
+            // pointer has moved at least once
+            if (!pointer.hasMoved) {
+                pointer.hasMoved = true;
+            }
+            // pointer is currently moving
+            pointer.wasMoving = pointer.isMoving;
+            pointer.isMoving = true;
+            // send the current pointer data to it's consumers
+            callback(pointer);
+            // if timer already exists, clear it
+            if (timer) {
+                timer = clearTimeout(timer);
+            }
+            // start a new timer and store it
+            timer = setTimeout(() => {
+                // pointer is no longer moving
+                pointer.wasMoving = pointer.isMoving;
+                pointer.isMoving = false;
+                // send the current pointer data to it's consumers again because we stopped moving
+                callback(pointer);
+            }, delay);
+        });
+    };
+    // set up the handlers ^.^
+    element.addEventListener('touchstart', (e) => handlePointer(e), true);
+    element.addEventListener('touchmove', (e) => handlePointer(e), true);
+    element.addEventListener('mousemove', (e) => handlePointer(e), true);
     return false;
 };
 class StarField {
@@ -183,7 +273,7 @@ class StarField {
             this.mouseMoved = pointer.hasMoved;
             this.mouseMoving = pointer.isMoving;
             this.zSpeed = mapRange(pointer.y, 0, height, 12, -4);
-            this.xSpeed = mapRange(pointer.x, 0, width, -10, 10);
+            this.xSpeed = mapRange(pointer.x, 0, width, -5, 5);
             if (Math.abs(this.xSpeed) > 2) {
                 this.zSpeed /= (Math.abs(this.xSpeed) / 2);
             }
@@ -256,14 +346,58 @@ class StarField {
         let [size, depth] = this.container;
         this.context.clearRect(-size / 2, -size / 2, size, size);
     }
-
+    drawMouseControl() {
+        let context = this.context;
+        let [width, height] = this.screen;
+        let ellipseX = 0, ellipseY = height * 0.25;
+        let ellipseW = 50, ellipseH = 21;
+        ellipseH *= mapRange(this.mouseY, -height / 2 + ellipseY, height / 2 + ellipseY, 0.8, 1.2);
+        let pointIsInEllipse = isInEllipse(this.mouseX, this.mouseY, ellipseX, ellipseY, ellipseW, ellipseH);
+        if (pointIsInEllipse) {
+            this.xSpeed = 0;
+            this.zSpeed = 0;
+        }
+        let xSpin = this.mouseX / width;
+        // ellipse
+        context.beginPath();
+        context.ellipse(ellipseX, ellipseY, ellipseW, ellipseH, xSpin, 0, 2 * Math.PI);
+        context.strokeStyle = `rgba(255, 255, 255, ${this.mouseControlAlpha})`;
+        context.lineWidth = 2;
+        context.stroke();
+        let scaleFactor = 1;
+        if (-this.mouseY > 0) {
+            scaleFactor = mapRange(Math.abs(this.mouseX / width), 0, 1, 2, 0);
+        }
+        let lineDist = distance([ellipseX, ellipseY], [this.mouseX, this.mouseY * scaleFactor]);
+        let [limitedMouseX, limitedMouseY] = limitToCircle(this.mouseX, this.mouseY, ellipseX, ellipseY, lineDist / 2);
+        // input-tracking line
+        context.beginPath();
+        context.moveTo(ellipseX, ellipseY);
+        context.lineTo(limitedMouseX, limitedMouseY);
+        context.stroke();
+    }
     render() {
+        if (this.showMouseControls) {
+            if (!this.mouseMoved || this.mouseMoving) {
+                // when mouse is moving, make controls visible instantly
+                this.mouseControlAlpha = 0.3;
+                // this.drawMouseControl();
+            }
+            else {
+                // when mouse stops moving, start fading out the opacity slowly
+                // TODO: make it actually time based so it fades out over the period you pass it
+                // just kinda hacked in a rough approximation by feel on my machine lol
+                // good enough for now
+                this.mouseControlAlpha -= (0.25 * this.deltaTime) / this.UIFadeDelay;
+                // this.drawMouseControl();
+            }
+        }
         // update and draw all the stars
         for (let i = 0; i < this.stars.length; i++) {
             if (!this.pauseAnimation) {
                 this.stars[i].update(this.deltaTime, this.container, this.xSpeed, this.zSpeed);
             }
-            this.stars[i].draw(this.context, this.container, this.screen);
+            this.stars[i].draw(this.context, this.container, this.screen, this.mouseX, this.mouseY);
         }
     }
     rePopOnResizeStop() {
@@ -306,7 +440,7 @@ class StarField {
 }
 export function setup() {
     let canvas = document.getElementById('canvas');
-    const howManyStars = 800;
+    let howManyStars = 1000;
     if (IS_MOBILE)
         howManyStars = 500;
     let starfield = new StarField(howManyStars, canvas);
