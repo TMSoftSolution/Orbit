@@ -1,5 +1,7 @@
+import About from "./About";
 import Landing from "./Landing";
 
 export {
-    Landing
+    About,
+    Landing,
 }

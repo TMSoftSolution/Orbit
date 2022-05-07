@@ -1,21 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import { setup } from "./script";
-import { Landing } from "./components";
+import { About, Landing } from "./components";
 
-class App extends React.Component {
-  componentDidMount() {
+export default function App() {
+
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
     setup();
-  }
+  }, []);
 
-  render() {
-    return (
-      <div style={{ height: "100vh" }}>
-        <canvas id="canvas"></canvas>
-        <Landing />
-      </div>
-    );
-  }
+  const onHello = () => {
+    console.log('onHello');
+    setStep(1);
+  };
+
+  const onProjects = () => {
+    console.log('onProjects');
+    setStep(0);
+  };
+
+  return (
+    <div style={{ height: "100vh" }}>
+      <canvas id="canvas"></canvas>
+      {step === 0 && <Landing onHello={onHello} />}
+      {/* {step === 1 && <About onProjects={onProjects} />} */}
+    </div>
+  );
 }
-
-export default App;
