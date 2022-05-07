@@ -18,7 +18,7 @@ export default function About(props) {
             development, branding, and everything in between.
           </div>
         </Row>
-        <button id="btn-main" className="mt-5" onClick={onProjects}>
+        <button className="btn-main mt-5" onClick={onProjects}>
           PROJECTS
         </button>
       </Container>

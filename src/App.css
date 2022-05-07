@@ -1,0 +1,29 @@
+#landing-logo {
+  height: 250px;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#logo-text {
+  position: absolute;
+  top: 36px;
+  left: 90px;
+}
+
+#btn-hello {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  margin-top: 200px;
+  transform: translate(-50%, 0%);
+}
+
+#btn-contact {
+    position: absolute;
+    top: 36px;
+    right: 0px;
+    transform: translate(-50%, 0%);
+  }
+  

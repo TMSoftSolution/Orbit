@@ -1,37 +1,42 @@
-import { Container, Image, Row } from "react-bootstrap";
+import { Image } from "react-bootstrap";
 import "./index.css";
 import gsap from "gsap";
+import { useEffect, useState } from "react";
 
 export default function Landing(props) {
+  const [step, setStep] = useState(0);
+
   const onHello = () => {
     // props.onHello();
+    // setStep(1);
+    // gsap.to("#container", {
+    //   display: "block",
+    //   duration: 4,
+    // });
     gsap.to("#landing-logo", {
-      rotation: 360,
-      x: -530,
-      y: -380,
-      duration: 2,
-      scale: 0.1,
+      display: "initial",
+      scale: 0.12,
+      duration: 3,
+      top: 50,
+      left: 50,
+      onComplete: () => {
+        console.log('complete');
+      }
     });
   };
 
   return (
-    <Container
-      id="container"
-      className="d-flex justify-content-center align-items-center"
-    >
-      <Container className="text-center">
-        <Row className="justify-content-center">
-          <Image
-            id="landing-logo"
-            src="assets/landing-logo.png"
-            alt="landig logo"
-            style={{ width: 200 }}
-          />
-        </Row>
-        <button id="btn-main" className="mt-5" onClick={onHello}>
+    <div id="container">
+      <Image
+        id="landing-logo"
+        src="assets/landing-logo.png"
+        alt="landig logo"
+      />
+      {step === 0 && (
+        <button id="btn-hello" className="btn-main mt-5" onClick={onHello}>
           HELLO
         </button>
-      </Container>
-    </Container>
+      )}
+    </div>
   );
 }
