@@ -18,6 +18,7 @@
   left: 50%;
   margin-top: 200px;
   transform: translate(-50%, 0%);
+  z-index: 1;
 }
 
 #btn-contact {
@@ -29,7 +30,8 @@
 
 #about-container {
   position: absolute;
-  top: -1600px;
+  opacity: 0;
+  z-index: 0;
   display: flex;
   flex-flow: column;
   align-items: center;

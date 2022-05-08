@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import { setup } from "./script";
+import { cursor } from "./cursor";
 import gsap from "gsap";
 
 export default function App() {
@@ -8,6 +9,7 @@ export default function App() {
 
   useEffect(() => {
     setup();
+    cursor();
   }, []);
 
   const onHello = () => {
@@ -20,15 +22,19 @@ export default function App() {
         duration: 4,
         rotate: 360,
         top: 50,
-        left: 50,
+        left: 80,
         ease: "power3.out",
         onComplete: () => {
           console.log("complete");
         },
       })
-      .to("#logo-text", { duration: 1, left: 90 }, "-=2")
+      .to("#logo-text", { duration: 1, left: 120 }, "-=2")
       .to("#btn-contact", { duration: 1, right: 0 }, "-=2")
-      .to("#about-container", { duration: 2, top: 0 }, "-=4");
+      .to(
+        "#about-container",
+        { duration: 2, opacity: 1, z: 1, immediateRender: false, stagger: 1 },
+        "-=3.5"
+      );
   };
 
   const onProjects = () => {
@@ -40,6 +46,8 @@ export default function App() {
     <div style={{ height: "100vh" }}>
       {/* Canvas */}
       <canvas id="canvas"></canvas>
+      {/* Cursor */}
+      <div class="cursor"></div>
       {/* Logo */}
       <img id="landing-logo" src="assets/landing-logo.png" alt="landig logo" />
       {/* Text Logo */}
