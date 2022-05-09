@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+} from "react";
 import "./App.css";
 import { setup } from "./script";
 import { cursor } from "./cursor";
 import gsap from "gsap";
 
 export default function App() {
-  const [step, setStep] = useState(0);
 
   useEffect(() => {
     setup();
@@ -14,12 +15,11 @@ export default function App() {
 
   const onHello = () => {
     console.log("onHello");
-    setStep(1);
     gsap
       .timeline()
       .to("#landing-logo", {
         height: 55,
-        duration: 4,
+        duration: 2,
         rotate: 360,
         top: 50,
         left: 80,
@@ -28,12 +28,13 @@ export default function App() {
           console.log("complete");
         },
       })
+      .to("#btn-hello", {duration: 0.5, opacity: 0, z: 0, stagger: 1}, "-=2")
       .to("#logo-text", { duration: 1, left: 120 }, "-=2")
       .to("#btn-contact", { duration: 1, right: 0 }, "-=2")
       .to(
         "#about-container",
-        { duration: 2, opacity: 1, z: 1, immediateRender: false, stagger: 1 },
-        "-=3.5"
+        { duration: 5, opacity: 1, z: 1, immediateRender: false, stagger: 0 },
+        "-=1"
       );
   };
 
@@ -55,11 +56,9 @@ export default function App() {
       <button id="btn-contact" className="btn-main">
         CONTACT
       </button>
-      {step === 0 && (
-        <button id="btn-hello" className="btn-main" onClick={onHello}>
-          HELLO
-        </button>
-      )}
+      <button id="btn-hello" className="btn-main" onClick={onHello}>
+        HELLO
+      </button>
       {/* About */}
       <div id="about-container">
         <div className="fs-2 text-white mx-5 px-5">
