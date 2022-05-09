@@ -28,19 +28,22 @@ export default function App() {
           console.log("complete");
         },
       })
-      .to("#btn-hello", {duration: 0.5, opacity: 0, z: 0, stagger: 1}, "-=2")
+      .to("#btn-hello", {duration: 0.5, opacity: 0, z: 0, stagger: 0}, "-=2")
       .to("#logo-text", { duration: 1, left: 120 }, "-=2")
       .to("#btn-contact", { duration: 1, right: 0 }, "-=2")
       .to(
         "#about-container",
-        { duration: 5, opacity: 1, z: 1, immediateRender: false, stagger: 0 },
+        { duration: 3, opacity: 1, z: 1, immediateRender: false, stagger: 0 },
         "-=1"
       );
   };
 
   const onProjects = () => {
     console.log("onProjects");
-    // setStep(0);
+    gsap.timeline().to(
+      "#about-container",
+      { duration: 1, opacity: 0, z: 0, immediateRender: false, stagger: 0 },
+    );
   };
 
   return (
